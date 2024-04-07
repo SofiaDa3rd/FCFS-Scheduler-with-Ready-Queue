@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCFS Scheduler with Ready Queue</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .gantt-chart {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2><center>FCFS Scheduler with Ready Queue</center></h2>
+
+    <label for="numberOfProcesses"><center><Enter the number of processes:</label>
+    <input type="number" id="numberOfProcesses" />
+    <button onclick="calculateFCFS()">Calculate FCFS</button>
+
+    <script>
+        function calculateFCFS() {
+            const numberOfProcesses = parseInt(document.getElementById("numberOfProcesses").value);
+            const pid = [];
+            const bt = [];
+            const ar = [];
+            const ct = [];
+            const ta = [];
+            const wt = [];
+            const rt = []; // Response Time
+            const readyQueue = [];
+
+            for (let i = 0; i < numberOfProcesses; i++) {
+                ar[i] = parseInt(prompt(`Enter process ${i + 1} arrival time:`));
+                bt[i] = parseInt(prompt(`Enter process ${i + 1} burst time:`));
+                pid[i] = i + 1;
+            }
+
+            // Sort processes by arrival time
+            for (let i = 0; i < numberOfProcesses; i++) {
+                for (let j = i + 1; j < numberOfProcesses; j++) {
+                    if (ar[i] > ar[j]) {
+                        [ar[i], ar[j]] = [ar[j], ar[i]];
+                        [pid[i], pid[j]] = [pid[j], pid[i]];
+                        [bt[i], bt[j]] = [bt[j], bt[i]];
+                    }
+                }
+            }
+
+            // Process the ready queue
+            let currentTime = ar[0];
+            for (let i = 0; i < numberOfProcesses; i++) {
+                if (ar[i] > currentTime) {
+                    // If the process hasn't arrived yet, update the current time
+                    currentTime = ar[i];
+                }
+
+                readyQueue.push({
+                    processId: pid[i],
+                    arrivalTime: ar[i],
+                    burstTime: bt[i],
+                    completionTime: currentTime + bt[i],
+                    turnaroundTime: currentTime + bt[i] - ar[i],
+                    waitingTime: currentTime - ar[i],
+                    responseTime: currentTime - ar[i], // Response Time is the same as Waiting Time
+                });
+
+                currentTime += bt[i];
+            }
+
+            // Remove existing tables and charts
+            const existingTables = document.querySelectorAll('table');
+            existingTables.forEach(table => table.remove());
+
+            const existingCharts = document.querySelectorAll('.gantt-chart');
+            existingCharts.forEach(chart => chart.remove());
+
+            const existingReadyQueue = document.querySelectorAll('.ready-queue');
+            existingReadyQueue.forEach(queue => queue.remove());
+
+            // Create and append the table
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <tr>
+                    <th>Process</th>
+                    <th>AT</th>
+                    <th>BT</th>
+                    <th>CT</th>
+                    <th>TAT</th>
+                    <th>WT</th>
+                    <th>RT</th>
+                </tr>
+            `;
+            for (let i = 0; i < numberOfProcesses; i++) {
+                table.innerHTML += `
+                    <tr>
+                        <td>${readyQueue[i].processId}</td>
+                        <td>${readyQueue[i].arrivalTime}</td>
+                        <td>${readyQueue[i].burstTime}</td>
+                        <td>${readyQueue[i].completionTime}</td>
+                        <td>${readyQueue[i].turnaroundTime}</td>
+                        <td>${readyQueue[i].waitingTime}</td>
+                        <td>${readyQueue[i].responseTime}</td>
+                    </tr>
+                `;
+            }
+            document.body.appendChild(table);
+
+            // Create and append the ready queue    
+            const readyQueueDiv = document.createElement('div');
+            readyQueueDiv.classList.add('ready-queue');
+            readyQueueDiv.innerHTML = '<strong>Ready Queue:</strong> ';
+            readyQueue.sort((a, b) => a.arrivalTime - b.arrivalTime);
+            for (let i = 0; i < numberOfProcesses; i++) {
+                readyQueueDiv.innerHTML += `P${readyQueue[i].processId} `;
+            }
+            document.body.appendChild(readyQueueDiv);
+
+            // Create and append the Gantt chart
+            const ganttChart = document.createElement('div');
+            ganttChart.classList.add('gantt-chart');
+            ganttChart.innerHTML = '<strong>Gantt Chart:</strong> ';
+
+            // Calculate Gantt chart values based on completion times
+            let ganttChartValues = '';
+            for (let i = 0; i < numberOfProcesses; i++) {
+                ganttChartValues += `P${readyQueue[i].processId} `;
+            }
+            ganttChart.innerHTML += ganttChartValues;
+            document.body.appendChild(ganttChart);
+
+            console.log(readyQueue);
+
+            // Display Gantt Chart values
+            console.log(ganttChartValues);
+            
+let totalCT = 0;
+let totalTAT = 0;
+let totalWT = 0;
+let totalRT = 0;
+
+for (let i = 0; i < numberOfProcesses; i++) {
+    totalCT += readyQueue[i].completionTime;
+    totalTAT += readyQueue[i].turnaroundTime;
+    totalWT += readyQueue[i].waitingTime;
+    totalRT += readyQueue[i].responseTime;
+}
+
+const averageCT = totalCT / numberOfProcesses;
+const averageTAT = totalTAT / numberOfProcesses;
+const averageWT = totalWT / numberOfProcesses;
+const averageRT = totalRT / numberOfProcesses;
+
+// Display averages
+const averagesDiv = document.createElement('div');
+averagesDiv.innerHTML = `<strong>Average CT:</strong> ${averageCT.toFixed(2)} 
+                         <br>
+                         <strong>Average TAT:</strong> ${averageTAT.toFixed(2)} 
+                         <br>
+                         <strong>Average WT:</strong> ${averageWT.toFixed(2)}
+                         <br>
+                          <strong>Average RT:</strong> ${averageRT.toFixed(2)}`;
+document.body.appendChild(averagesDiv);
+        }
+    </script>
+
+</body>
+</html>
